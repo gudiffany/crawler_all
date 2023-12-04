@@ -67,11 +67,13 @@ def process_code_block(tag):
         new_code_block = f"```\n{code_text}\n```"
         tag.replace_with(new_code_block)
 
+
 def process_code_tag(code_tag):
     if code_tag.name == 'code':
         code_content = code_tag.get_text(strip=True)
         new_inline_code = f"`{code_content}`"
         code_tag.replace_with(new_inline_code)
+
 
 def convert_webpage_to_markdown(url, base_url, output_folder):
     try:
@@ -129,11 +131,10 @@ def convert_webpage_to_markdown(url, base_url, output_folder):
             md_cleaned = '\n'.join(md_lines)
             md_cleaned = md_cleaned.replace('```', '```\n')
             md_cleaned = md_cleaned.replace('```', '\n```')
-            md_cleaned = md_cleaned.replace('`\n','`')
-            md_cleaned = md_cleaned.replace('\n`','`')
+            md_cleaned = md_cleaned.replace('`\n', '`')
+            md_cleaned = md_cleaned.replace('\n`', '`')
             md_cleaned = md_cleaned.replace('```', '```\n')
             md_cleaned = md_cleaned.replace('```', '\n```')
-
 
             invalid_characters = r'\/:*?"<>|'
             file_name = md_cleaned.split("\n")[0]
@@ -198,12 +199,14 @@ def perform_operation(input_url, output_folder):
             if i > 2:
                 break
 
+
 def main():
     parser = argparse.ArgumentParser(description='blog 爬虫')
     parser.add_argument('-u', '--input_url', type=str, help='输入爬取blog主页的网站路径')
     parser.add_argument('-o', '--output_folder', type=str, help='输出文件夹的路径')
     args = parser.parse_args()
     perform_operation(args.input_url, args.output_folder)
+
 
 if __name__ == '__main__':
     main()
