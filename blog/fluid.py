@@ -1,7 +1,9 @@
+import os
+import argparse
 import bs4
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, unquote
 import re
 
 
@@ -39,16 +41,14 @@ def process_a_tags(tag, base_url):
                 absolute_url = href
 
             markdown_link = f"[{link_text}]({absolute_url} '{title}')"
-            new_tag = bs4.BeautifulSoup(markdown_link, "html.parser")
-            tag.replace_with(new_tag)
+            tag.replace_with(markdown_link)
     elif tag.name == "img":
         src = tag.get("src")
         absolute_url = urljoin(base_url, src)
         alt = tag.get("alt")
         title = tag.get("title")
         markdown_img = f"![{alt}]({absolute_url} '{title}')\n"
-        new_tag = bs4.BeautifulSoup(markdown_img, "html.parser")
-        tag.replace_with(new_tag)
+        tag.replace_with(markdown_img)
 
 
 def convert_all_a_tags_to_url(article_tag, base_url=None):
@@ -66,7 +66,7 @@ def process_code_block(tag):
         tag.replace_with(new_code_block)
 
 
-def convert_webpage_to_markdown(url, output_file, base_url=""):
+def convert_webpage_to_markdown(url, output_file, base_url, output_folder):
     try:
         # 获取网页内容
         response = requests.get(url)
@@ -102,7 +102,9 @@ def convert_webpage_to_markdown(url, output_file, base_url=""):
             md_lines = [line.lstrip() for line in md_stripped.splitlines() if line.strip()]
             md_cleaned = '\n'.join(md_lines)
 
-            with open(output_file, 'w', encoding='utf-8') as file:
+            file_path = os.path.join(output_folder, output_file)
+
+            with open(file_path, 'w', encoding='utf-8') as file:
                 file.write(md_cleaned)
 
         else:
@@ -115,36 +117,57 @@ def convert_webpage_to_markdown(url, output_file, base_url=""):
         print(f"An unexpected error occurred: {e}")
 
 
-url1 = ''
-url2 = ''
-# 获取所有链接
-all_links1 = get_all_links(url1)
-all_links2 = get_all_links(url2)
+def main():
+    parser = argparse.ArgumentParser(description='blog 爬虫')
+    parser.add_argument('-u', '--input_url', type=str, help='输入爬取blog主页的网站路径')
+    parser.add_argument('-o', '--output_folder', type=str, help='输出文件夹的路径')
+    args = parser.parse_args()
+    perform_operation(args.input_url, args.output_folder)
 
-link1 = set(all_links1)
-link2 = set(all_links2)
-same = link1.intersection(link2)
 
-print(same)
-
-for i in range(1, 100):
+def perform_operation(input_url, output_folder):
     try:
-        if i == 1:
-            all_link = ''
-            s = get_all_archives(all_link, same)
-            if len(s) == 0:
-                break
-            else:
-                for j in s:
-                    convert_webpage_to_markdown(j, 'output.md')
-                    break
-            break
+        os.mkdir(output_folder)
+    except FileExistsError:
+        print("文件夹已存在")
+    url1 = input_url.strip('/') + '/archives'
+    url2 = input_url.strip('/') + '/archives/page/2'
+    # 获取所有链接
+    all_links1 = get_all_links(url1)
+    all_links2 = get_all_links(url2)
 
-        else:
-            all_link = '' + str(i)
-            s = get_all_archives(all_link, same)
-            if len(s) == 0:
+    link1 = set(all_links1)
+    link2 = set(all_links2)
+    same = link1.intersection(link2)
+
+    # print(same)
+
+    for i in range(1, 100):
+        try:
+            if i == 1:
+                all_link = url1
+                s = get_all_archives(all_link, same)
+                if len(s) == 0:
+                    break
+                else:
+                    for j in s:
+                        out_file = j.split('/')
+                        convert_webpage_to_markdown(j, f'{unquote(out_file[-2])}.md',
+                                                    input_url.strip('/'), output_folder)
+            else:
+                all_link = url1 + '/page/' + str(i)
+                s = get_all_archives(all_link, same)
+                if len(s) == 0:
+                    break
+                else:
+                    for j in s:
+                        out_file = j.split('/')
+                        convert_webpage_to_markdown(j, f'{unquote(out_file[-2])}.md',
+                                                    input_url.strip('/'), output_folder)
+        except:
+            if i > 2:
                 break
-    except:
-        if i > 2:
-            break
+
+
+if __name__ == '__main__':
+    main()
