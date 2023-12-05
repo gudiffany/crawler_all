@@ -62,7 +62,7 @@ def process_code_block(tag):
     code_tag = tag.find("code")
     if code_tag:
         code_content = code_tag.get_text()
-        new_code_block = f"```\n{code_content}\n```"
+        new_code_block = f"````\n{code_content}\n````"
         tag.replace_with(new_code_block)
 
 
@@ -101,6 +101,10 @@ def convert_webpage_to_markdown(url, output_file, base_url, output_folder):
             md_stripped = md_no_html.strip()
             md_lines = [line.lstrip() for line in md_stripped.splitlines() if line.strip()]
             md_cleaned = '\n'.join(md_lines)
+
+            md_cleaned = md_cleaned.replace('&gt;', '>')
+            md_cleaned = md_cleaned.replace('&lt;', '<')
+            md_cleaned = md_cleaned.replace('&amp;', '&')
 
             file_path = os.path.join(output_folder, output_file)
 

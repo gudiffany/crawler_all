@@ -64,7 +64,7 @@ def process_code_block(tag):
         code_content = str(code_tag).replace('<br/>', '\n')
         soup = BeautifulSoup(code_content, 'html.parser')
         code_text = soup.get_text()
-        new_code_block = f"```\n{code_text}\n```"
+        new_code_block = f"````\n{code_text}\n````"
         tag.replace_with(new_code_block)
 
 
@@ -117,7 +117,7 @@ def convert_webpage_to_markdown(url, base_url, output_folder):
             md_lines = []
             in_backticks_block = False
             for i in md_string:
-                if '```' in i and len(i.lstrip()) < 4:
+                if '````' in i and len(i.lstrip()) <= 4:
                     in_backticks_block = not in_backticks_block
                     md_lines.append(i)
                 elif not in_backticks_block:
@@ -129,12 +129,9 @@ def convert_webpage_to_markdown(url, base_url, output_folder):
                     md_lines.append(i)
 
             md_cleaned = '\n'.join(md_lines)
-            md_cleaned = md_cleaned.replace('```', '```\n')
-            md_cleaned = md_cleaned.replace('```', '\n```')
-            md_cleaned = md_cleaned.replace('`\n', '`')
-            md_cleaned = md_cleaned.replace('\n`', '`')
-            md_cleaned = md_cleaned.replace('```', '```\n')
-            md_cleaned = md_cleaned.replace('```', '\n```')
+            md_cleaned = md_cleaned.replace('&gt;', '>')
+            md_cleaned = md_cleaned.replace('&lt;', '<')
+            md_cleaned = md_cleaned.replace('&amp;', '&')
 
             invalid_characters = r'\/:*?"<>|'
             file_name = md_cleaned.split("\n")[0]

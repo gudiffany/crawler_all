@@ -117,7 +117,7 @@ def convert_webpage_to_markdown(url, output_file, base_url, output_folder):
             md_lines = []
             in_backticks_block = False
             for i in md_string:
-                if '```' in i:
+                if '````' in i and len(i.lstrip()) <= 4:
                     in_backticks_block = not in_backticks_block
                     md_lines.append(i)
                 elif not in_backticks_block:
@@ -129,12 +129,9 @@ def convert_webpage_to_markdown(url, output_file, base_url, output_folder):
                     md_lines.append(i)
 
             md_cleaned = '\n'.join(md_lines)
-            md_cleaned = md_cleaned.replace('```', '```\n')
-            md_cleaned = md_cleaned.replace('```', '\n```')
-            md_cleaned = md_cleaned.replace('`\n', '`')
-            md_cleaned = md_cleaned.replace('\n`', '`')
-            md_cleaned = md_cleaned.replace('```', '```\n')
-            md_cleaned = md_cleaned.replace('```', '\n```')
+            md_cleaned = md_cleaned.replace('&gt;', '>')
+            md_cleaned = md_cleaned.replace('&lt;', '<')
+            md_cleaned = md_cleaned.replace('&amp;', '&')
 
             file_path = os.path.join(output_folder, output_file)
 
