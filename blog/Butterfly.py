@@ -35,7 +35,6 @@ def process_a_tags(tag, base_url):
 
         if href:
             if not urlparse(href).scheme and base_url:
-                # 如果是相对路径且存在 base_url，则转换为绝对路径
                 absolute_url = urljoin(base_url, href)
             else:
                 absolute_url = href
