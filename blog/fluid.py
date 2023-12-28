@@ -23,7 +23,6 @@ def get_all_archives(url, same_url):
         match = re.search(pattern, i)
         if i not in same_url and match:
             s.append(i)
-    print(s)
     return s
 
 
@@ -58,22 +57,31 @@ def convert_all_a_tags_to_url(article_tag, base_url=None):
         process_a_tags(a_tag, base_url)
 
 
-def process_code_block(tag):
-    code_tag = tag.find("code")
+def process_code_block(tag, classes):
+    code_tag = tag.find('td', class_='code')
     if code_tag:
-        code_content = code_tag.get_text()
-        new_code_block = f"````\n{code_content}\n````"
+        code_content = str(code_tag).replace('<br/>', '\n')
+        soup = BeautifulSoup(code_content, 'html.parser')
+        code_text = soup.get_text()
+        if classes != 'plaintext':
+            new_code_block = f"````{classes}\n{code_text}\n````"
+        else:
+            new_code_block = f"````\n{code_text}\n````"
         tag.replace_with(new_code_block)
 
+def process_code_tag(code_tag):
+    if code_tag.name == 'code':
+        code_content = code_tag.get_text(strip=True)
+        new_inline_code = f"`{code_content}`"
+        code_tag.replace_with(new_inline_code)
 
 def convert_webpage_to_markdown(url, output_file, base_url, output_folder):
+    print(url)
     try:
-        # 获取网页内容
         response = requests.get(url)
         response.raise_for_status()
         html_content = response.text
 
-        # 使用BeautifulSoup解析HTML
         bs = bs4.BeautifulSoup(html_content, "html.parser")
         core = bs.find("article")
 
@@ -93,14 +101,28 @@ def convert_webpage_to_markdown(url, output_file, base_url, output_folder):
 
             convert_all_a_tags_to_url(core, base_url)
             figure_tags = core.find_all("figure", class_="highlight")
-            for figure_tag in figure_tags:
-                process_code_block(figure_tag)
+            if figure_tags:
+                for figure_tag in figure_tags:
+                    classes = figure_tag.get('class', [])
+                    process_code_block(figure_tag, classes[1])
+            code_light_tag = core.find_all()
+            for code_tag in code_light_tag:
+                process_code_tag(code_tag)
 
             md = core.prettify()
             md_no_html = re.sub(r'</?[a-zA-Z]+[^<>]*>', '', md)
             md_stripped = md_no_html.strip()
             md_lines = [line.lstrip() for line in md_stripped.splitlines() if line.strip()]
             md_cleaned = '\n'.join(md_lines)
+            md_cleaned = md_cleaned.split('\n')
+            for i in range(len(md_cleaned)):
+                md_cleaned[i] += '\n'
+            for i in range(len(md_cleaned)):
+                if md_cleaned[i][0] == '`' and md_cleaned[i][len(md_cleaned[i]) - 2] == '`' and len(
+                        md_cleaned[i].replace('`', '')) != 1:
+                    md_cleaned[i - 1] = md_cleaned[i - 1].replace('\n', '')
+                    md_cleaned[i] = md_cleaned[i].replace('\n', '')
+            md_cleaned = ''.join(md_cleaned)
 
             md_cleaned = md_cleaned.replace('&gt;', '>')
             md_cleaned = md_cleaned.replace('&lt;', '<')
@@ -136,7 +158,6 @@ def perform_operation(input_url, output_folder):
         print("文件夹已存在")
     url1 = input_url.strip('/') + '/archives'
     url2 = input_url.strip('/') + '/archives/page/2'
-    # 获取所有链接
     all_links1 = get_all_links(url1)
     all_links2 = get_all_links(url2)
 
