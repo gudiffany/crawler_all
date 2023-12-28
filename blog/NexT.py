@@ -23,7 +23,6 @@ def get_all_archives(url, same_url):
         match = re.search(pattern, i)
         if i not in same_url and match:
             s.append(i)
-    print(s)
     return s
 
 
@@ -58,13 +57,16 @@ def convert_all_a_tags_to_url(article_tag, base_url=None):
         process_a_tags(a_tag, base_url)
 
 
-def process_code_block(tag):
+def process_code_block(tag,classes):
     code_tag = tag.find('td', class_='code')
     if code_tag:
         code_content = str(code_tag).replace('<br/>', '\n')
         soup = BeautifulSoup(code_content, 'html.parser')
         code_text = soup.get_text()
-        new_code_block = f"````\n{code_text}\n````"
+        if classes != 'plaintext':
+            new_code_block = f"````{classes}\n{code_text}\n````"
+        else:
+            new_code_block = f"````\n{code_text}\n````"
         tag.replace_with(new_code_block)
 
 
@@ -102,8 +104,10 @@ def convert_webpage_to_markdown(url, base_url, output_folder):
 
             convert_all_a_tags_to_url(core, base_url)
             figure_tags = core.find_all("figure", class_="highlight")
-            for figure_tag in figure_tags:
-                process_code_block(figure_tag)
+            if figure_tags:
+                for figure_tag in figure_tags:
+                    classes = figure_tag.get('class', [])
+                    process_code_block(figure_tag, classes[1])
 
             code_light_tag = core.find_all()
             for code_tag in code_light_tag:
@@ -117,7 +121,7 @@ def convert_webpage_to_markdown(url, base_url, output_folder):
             md_lines = []
             in_backticks_block = False
             for i in md_string:
-                if '````' in i and len(i.lstrip()) <= 4:
+                if '````' in i:
                     in_backticks_block = not in_backticks_block
                     md_lines.append(i)
                 elif not in_backticks_block:
@@ -168,8 +172,6 @@ def perform_operation(input_url, output_folder):
     link2 = set(all_links2)
     same = link1.intersection(link2)
 
-    # print(same)
-
     for i in range(1, 100):
         try:
             if i == 1:
@@ -180,6 +182,7 @@ def perform_operation(input_url, output_folder):
                 else:
                     for j in s:
                         out_file = j.split('/')
+                        print(j)
                         convert_webpage_to_markdown(j,
                                                     input_url.strip('/'), output_folder)
             else:
