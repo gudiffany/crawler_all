@@ -56,7 +56,7 @@ def convert_all_a_tags_to_url(article_tag, base_url=None):
         process_a_tags(a_tag, base_url)
 
 
-def process_code_block(tag,classes):
+def process_code_block(tag, classes):
     code_tag = tag.find('td', class_='code')
     if code_tag:
         code_content = str(code_tag).replace('<br/>', '\n')
