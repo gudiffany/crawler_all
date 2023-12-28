@@ -58,13 +58,16 @@ def convert_all_a_tags_to_url(article_tag, base_url=None):
         process_a_tags(a_tag, base_url)
 
 
-def process_code_block(tag):
+def process_code_block(tag, classes):
     code_tag = tag.find('td', class_='code')
     if code_tag:
         code_content = str(code_tag).replace('<br/>', '\n')
         soup = BeautifulSoup(code_content, 'html.parser')
         code_text = soup.get_text()
-        new_code_block = f"```\n{code_text}\n```"
+        if classes != 'plaintext':
+            new_code_block = f"````{classes}\n{code_text}\n````"
+        else:
+            new_code_block = f"````\n{code_text}\n````"
         tag.replace_with(new_code_block)
 
 
@@ -77,12 +80,10 @@ def process_code_tag(code_tag):
 
 def convert_webpage_to_markdown(url, output_file, base_url, output_folder):
     try:
-        # 获取网页内容
         response = requests.get(url)
         response.raise_for_status()
         html_content = response.text
 
-        # 使用BeautifulSoup解析HTML
         bs = bs4.BeautifulSoup(html_content, "html.parser")
         core = bs.find("article")
 
@@ -102,8 +103,10 @@ def convert_webpage_to_markdown(url, output_file, base_url, output_folder):
 
             convert_all_a_tags_to_url(core, base_url)
             figure_tags = core.find_all("figure", class_="highlight")
-            for figure_tag in figure_tags:
-                process_code_block(figure_tag)
+            if figure_tags:
+                for figure_tag in figure_tags:
+                    classes = figure_tag.get('class', [])
+                    process_code_block(figure_tag, classes[1])
 
             code_light_tag = core.find_all()
             for code_tag in code_light_tag:
@@ -155,8 +158,6 @@ def perform_operation(input_url, output_folder):
         print("文件夹已存在")
 
     url1 = input_url.strip('/') + '/archives'
-
-    # print(same)
 
     all_url = []
 
