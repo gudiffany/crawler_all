@@ -34,7 +34,6 @@ def process_a_tags(tag, base_url):
 
         if href:
             if not urlparse(href).scheme and base_url:
-                # 如果是相对路径且存在 base_url，则转换为绝对路径
                 absolute_url = urljoin(base_url, href)
             else:
                 absolute_url = href
@@ -79,12 +78,10 @@ def process_code_tag(code_tag):
 
 def convert_webpage_to_markdown(url, base_url, output_folder):
     try:
-        # 获取网页内容
         response = requests.get(url)
         response.raise_for_status()
         html_content = response.text
 
-        # 使用BeautifulSoup解析HTML
         bs = bs4.BeautifulSoup(html_content, "html.parser")
         core = bs.find("article")
 
@@ -181,7 +178,6 @@ def perform_operation(input_url, output_folder):
                     break
                 else:
                     for j in s:
-                        out_file = j.split('/')
                         print(j)
                         convert_webpage_to_markdown(j,
                                                     input_url.strip('/'), output_folder)
@@ -192,7 +188,7 @@ def perform_operation(input_url, output_folder):
                     break
                 else:
                     for j in s:
-                        out_file = j.split('/')
+                        print(j)
                         convert_webpage_to_markdown(j,
                                                     input_url.strip('/'), output_folder)
         except:
