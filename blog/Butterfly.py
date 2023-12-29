@@ -1,10 +1,10 @@
 from base import *
 
 
-def convert_webpage_to_markdown(url, output_file, base_url, output_folder):
+def convert_webpage_to_markdown(url, output_file, base_url, output_folder, img):
     print(url)
     try:
-        md_no_html = html_to_md_first(url, base_url)
+        md_no_html = html_to_md_first(url, base_url, img, output_folder)
         md_string = md_no_html.split('\n')
         md_lines = md_clean(md_string)
         md_cleaned = html_to_md_second(md_lines)
@@ -36,7 +36,7 @@ def perform_operation(input_url, output_folder, img):
     for j in sorted(set(all_url), reverse=True):
         out_file = j.split('/')
         convert_webpage_to_markdown(j, f'{unquote(out_file[-2])}.md',
-                                    input_url.strip('/'), output_folder)
+                                    input_url.strip('/'), output_folder, img)
 
 
 if __name__ == '__main__':
