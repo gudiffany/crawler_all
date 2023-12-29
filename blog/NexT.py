@@ -1,10 +1,10 @@
 from base import *
 
 
-def convert_webpage_to_markdown(url, base_url, output_folder):
+def convert_webpage_to_markdown(url, base_url, output_folder, img):
     print(url)
     try:
-        md_no_html = html_to_md_first(url, base_url)
+        md_no_html = html_to_md_first(url, base_url, img, output_folder)
         md_string = md_no_html.split('\n')
         md_lines = md_clean(md_string)
         md_cleaned = html_to_md_second(md_lines)
@@ -13,6 +13,7 @@ def convert_webpage_to_markdown(url, base_url, output_folder):
         sanitized_file_name = ''.join(char if char not in invalid_characters else '_' for char in file_name)
         output_file = f'{unquote(sanitized_file_name.replace("# ", ""))}.md'
         file_path = os.path.join(output_folder, output_file)
+        print(file_path)
 
         with open(file_path, 'w', encoding='utf-8') as file:
             file.write(md_cleaned)
@@ -25,19 +26,24 @@ def convert_webpage_to_markdown(url, base_url, output_folder):
         print(f"An unexpected error occurred: {e}")
 
 
-def perform_operation(input_url, output_folder):
+def perform_operation(input_url, output_folder, img):
     try:
         os.mkdir(output_folder)
     except FileExistsError:
         print("文件夹已存在")
+    if img:
+        try:
+            os.mkdir(os.path.join(output_folder, "img"))
+        except FileExistsError:
+            print("图片文件夹已存在")
 
     all_url = get_all_urls(input_url)
 
-    for j in sorted(set(all_url)):
+    for j in sorted(set(all_url), reverse=True):
         convert_webpage_to_markdown(j,
-                                    input_url.strip('/'), output_folder)
+                                    input_url.strip('/'), output_folder, img)
 
 
 if __name__ == '__main__':
     args = main()
-    perform_operation(args.input_url, args.output_folder)
+    perform_operation(args.input_url, args.output_folder, args.have_img)

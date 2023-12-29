@@ -37,7 +37,7 @@ def get_all_archives(url, same_url):
     return s
 
 
-def process_a_tags(tag, base_url):
+def process_a_tags(tag, base_url, img_output=None, img=0):
     if tag.name == "a":
         href = tag.get("href")
         title = tag.get("title")
@@ -56,15 +56,24 @@ def process_a_tags(tag, base_url):
         absolute_url = urljoin(base_url, src)
         alt = tag.get("alt")
         title = tag.get("title")
-        markdown_img = f"![{alt}]({absolute_url} '{title}')\n"
-        tag.replace_with(markdown_img)
+        if img == 1:
+            img_path = os.path.join(img_output, "img", absolute_url.split('/')[-1])
+            print(img_path)
+            r = requests.get(absolute_url)
+            with open(img_path, "wb") as f:
+                f.write(r.content)
+            markdown_img = f"![{alt}](/img/{absolute_url.split('/')[-1]} '{title}')\n"
+            tag.replace_with(markdown_img)
+        else:
+            markdown_img = f"![{alt}]({absolute_url} '{title}')\n"
+            tag.replace_with(markdown_img)
 
 
-def convert_all_a_tags_to_url(article_tag, base_url=None):
+def convert_all_a_tags_to_url(article_tag, img_output, base_url=None, img=0):
     for a_tag in article_tag.find_all("a"):
         process_a_tags(a_tag, base_url)
     for a_tag in article_tag.find_all("img"):
-        process_a_tags(a_tag, base_url)
+        process_a_tags(a_tag, base_url, img_output, img)
 
 
 def process_code_block(tag, classes):
@@ -87,7 +96,7 @@ def process_code_tag(code_tag):
         code_tag.replace_with(new_inline_code)
 
 
-def html_to_md_first(url, base_url):
+def html_to_md_first(url, base_url, img, img_output):
     response = requests.get(url)
     response.raise_for_status()
     html_content = response.text
@@ -109,7 +118,7 @@ def html_to_md_first(url, base_url):
             markdown_list_item = f"* {li_content}\n"
             li_tag.replace_with(bs.new_string(markdown_list_item))
 
-        convert_all_a_tags_to_url(core, base_url)
+        convert_all_a_tags_to_url(core, img_output, base_url, img)
         figure_tags = core.find_all("figure", class_="highlight")
         if figure_tags:
             for figure_tag in figure_tags:
@@ -231,5 +240,6 @@ def main():
     parser = argparse.ArgumentParser(description='blog 爬虫')
     parser.add_argument('-u', '--input_url', type=str, help='输入爬取blog主页的网站路径')
     parser.add_argument('-o', '--output_folder', type=str, help='输出文件夹的路径')
+    parser.add_argument('-img', '--have_img', type=int, help='是否保存离线图片')
     args = parser.parse_args()
     return args
